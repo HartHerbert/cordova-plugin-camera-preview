@@ -50,7 +50,6 @@
 
     if (toBack) {
       // display the camera below the webview
-
       // make transparent
       self.webView.opaque = NO;
       self.webView.backgroundColor = [UIColor clearColor];
@@ -439,6 +438,106 @@
   }
 }
 
+- (void)recordVideo:(CDVInvokedUrlCommand*)command {
+    
+    NSString* callbackId = command.callbackId;
+    // options could contain limit, duration, highquality, frontcamera and mode
+    // taking more than one video (limit) is only supported if provide own controls via cameraOverlayView property
+    CGFloat duration = (CGFloat)[command.arguments[0] floatValue];
+    BOOL highquality = (BOOL)[command.arguments[1] boolValue];
+    BOOL frontcamera = (BOOL)[command.arguments[2] boolValue];
+    NSString* mediaType = nil;
+    
+    
+    NSDictionary* options = [command.arguments objectAtIndex:0];
+    
+    // emit and capture changes to the deviceOrientation
+    //[[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
+    //[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(orientationChanged:) name:@"UIDeviceOrientationDidChangeNotification" object:nil];
+    
+    // enable this line of code if you want to do stuff when the capture session is started
+    // [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didStartRunning:) name:AVCaptureSessionDidStartRunningNotification object:nil];
+    
+    // TODO try this: self.timer = [NSTimer scheduledTimerWithTimeInterval:0.5f target:self selector:@selector(updateStopwatchLabel) userInfo:nil repeats:YES];
+    //    timer en session.running property gebruiken?
+    
+    if ([options isKindOfClass:[NSNull class]]) {
+        options = [NSDictionary dictionary];
+    }
+    
+    
+    if ([UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+        // there is a camera, it is available, make sure it can do movies
+        pickerController = [[CDVImagePickerPlus alloc] init];
+        
+        NSArray* types = nil;
+        if ([UIImagePickerController respondsToSelector:@selector(availableMediaTypesForSourceType:)]) {
+            types = [UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera];
+            // NSLog(@"MediaTypes: %@", [types description]);
+            
+            if ([types containsObject:(NSString*)kUTTypeMovie]) {
+                mediaType = (NSString*)kUTTypeMovie;
+            } else if ([types containsObject:(NSString*)kUTTypeVideo]) {
+                mediaType = (NSString*)kUTTypeVideo;
+            }
+        }
+    }
+    if (!mediaType) {
+        // don't have video camera return error
+        NSLog(@"Capture.captureVideo: video mode not available.");
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageToErrorObject:CAPTURE_NOT_SUPPORTED];
+        [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+        pickerController = nil;
+    } else {
+        pickerController.delegate = self;
+    
+        pickerController.sourceType = UIImagePickerControllerSourceTypeCamera;
+        pickerController.allowsEditing = NO;
+        // iOS 3.0
+        pickerController.mediaTypes = [NSArray arrayWithObjects:mediaType, nil];
+        
+        if ([mediaType isEqualToString:(NSString*)kUTTypeMovie]){
+            if (duration) {
+                pickerController.videoMaximumDuration = [duration doubleValue];
+            }
+        }
+        
+        // iOS 4.0
+        if ([pickerController respondsToSelector:@selector(cameraCaptureMode)]) {
+            pickerController.cameraCaptureMode = UIImagePickerControllerCameraCaptureModeVideo;
+            if (highquality) {
+                pickerController.videoQuality = UIImagePickerControllerQualityTypeHigh;
+            }
+            if (frontcamera) {
+                pickerController.cameraDevice = UIImagePickerControllerCameraDeviceFront;
+            }
+            
+            pickerController.delegate = self;
+            [self alignOverlayDimensionsWithOrientation];
+            
+            
+            
+            // trying to add a progressbar to the bottom
+            /*
+             CGRect progressbarLabelFrame = CGRectMake(0, 0, pickerController.cameraOverlayView.frame.size.width/2, 4);
+             self.progressbarLabel = [[UILabel alloc] initWithFrame:progressbarLabelFrame];
+             self.progressbarLabel.backgroundColor = [UIColor redColor];
+             [pickerController.cameraOverlayView addSubview:self.progressbarLabel];
+             
+             self.timer = [NSTimer scheduledTimerWithTimeInterval:0.5f target:self selector:@selector(updateStopwatchLabel) userInfo:nil repeats:YES];
+             */
+            
+            // TODO make this configurable via the API (but only if Android supports it)
+            // pickerController.cameraFlashMode = UIImagePickerControllerCameraFlashModeAuto;
+        }
+        
+        // CDVImagePickerPlus specific property
+        pickerController.callbackId = callbackId;
+        [self.viewController presentViewController:pickerController animated:YES completion:nil];
+    }
+}
+
+
 -(void) setColorEffect:(CDVInvokedUrlCommand*)command {
   NSLog(@"setColorEffect");
   CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
@@ -482,6 +581,8 @@
 
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
+
+
 
 - (void) setPreviewSize: (CDVInvokedUrlCommand*)command {
 

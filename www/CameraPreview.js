@@ -50,6 +50,27 @@ CameraPreview.show = function(onSuccess, onError) {
     exec(onSuccess, onError, PLUGIN_NAME, "showCamera", []);
 };
 
+/*TODO add recordVideo*/
+
+CameraPreview.recordVideo = function (opts, onSuccess, onError) {
+  if (!opts) {
+    opts = {};
+  } else if (isFunction(opts)) {
+    onSuccess = opts;
+    opts = {};
+  }
+
+  if (!isFunction(onSuccess)) {
+    return false;
+  }
+
+  opts.duration = opts.duration || 20;
+  opts.highquality = opts.highquality || false;
+  opts.frontcamera = opts.frontcamera || false;
+
+  exec(onSuccess, onError, PLUGIN_NAME, "recordVideo", [opts.duration, opts.highquality, opts.frontcamera]);
+};
+
 CameraPreview.takePicture = function(opts, onSuccess, onError) {
     if (!opts) {
         opts = {};
@@ -72,6 +93,8 @@ CameraPreview.takePicture = function(opts, onSuccess, onError) {
     exec(onSuccess, onError, PLUGIN_NAME, "takePicture", [opts.width, opts.height, opts.quality]);
 };
 
+
+
 CameraPreview.setColorEffect = function(effect, onSuccess, onError) {
     exec(onSuccess, onError, PLUGIN_NAME, "setColorEffect", [effect]);
 };
@@ -93,7 +116,7 @@ CameraPreview.setPreviewSize = function(dimensions, onSuccess, onError) {
     dimensions.width = dimensions.width || window.screen.width;
     dimensions.height = dimensions.height || window.screen.height;
 
-    return exec(onSuccess, onError, PLUGIN_NAME, "setPreviewSize", [dimensions.width, dimensions.height]);
+    exec(onSuccess, onError, PLUGIN_NAME, "setPreviewSize", [dimensions.width, dimensions.height]);
 };
 
 CameraPreview.getSupportedPictureSizes = function(onSuccess, onError) {
@@ -127,7 +150,6 @@ CameraPreview.setFocusMode = function(focusMode, onSuccess, onError) {
 CameraPreview.tapToFocus = function(xPoint, yPoint, onSuccess, onError) {
     exec(onSuccess, onError, PLUGIN_NAME, "tapToFocus", [xPoint, yPoint]);
 };
-
 
 CameraPreview.getExposureModes = function(onSuccess, onError) {
     exec(onSuccess, onError, PLUGIN_NAME, "getExposureModes", []);
