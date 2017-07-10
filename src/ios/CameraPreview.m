@@ -803,11 +803,26 @@
 
         CGImageRelease(finalImage); // release CGImageRef to remove memory leaks
 
-        NSString *base64Image = [self getBase64Image:resultFinalImage withQuality:quality];
+        //NSString *base64Image = [self getBase64Image:resultFinalImage withQuality:quality];
 
+        //CGImageRelease(resultFinalImage); // release CGImageRef to remove memory leaks
+
+        //[params addObject:base64Image];
+          
+        //NO BASE64, Adding FilePath to Result
+          
+        NSString *documentsDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+          
+        NSString *filePath = [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"%f.jpg", [[NSDate date] timeIntervalSince1970]]];
+        imageData = UIImageJPEGRepresentation([UIImage imageWithCGImage:resultFinalImage], 0.8);
+        [imageData writeToFile:filePath atomically:YES];
+          
+         
         CGImageRelease(resultFinalImage); // release CGImageRef to remove memory leaks
-
-        [params addObject:base64Image];
+          
+        [params addObject:filePath];
+          
+          
 
         CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:params];
         [pluginResult setKeepCallbackAsBool:true];
