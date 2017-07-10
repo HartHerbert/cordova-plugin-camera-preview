@@ -37,6 +37,8 @@ import android.widget.RelativeLayout;
 import org.apache.cordova.LOG;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Exception;
 import java.lang.Integer;
@@ -393,34 +395,14 @@ public class CameraActivity extends Fragment {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
             byte[] byteArray = outputStream.toByteArray();
-            String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-            eventListener.onPictureTaken(encodedImage);
+            //String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+            generatePictureFromView(bitmap);
+              
+            //eventListener.onPictureTaken(encodedImage);
             Log.d(TAG, "CameraPreview pictureTakenHandler called back");
           }
         }.start();
-
-// =======
-
-        // try {
-        //          new Thread() {
-        //         public void run() {
-        //   byte[] byteArray = data;
-        //   if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-        //     Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-        //     bitmap = flipBitmap(bitmap);
-
-        //     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        //     bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
-        //     byteArray = outputStream.toByteArray();
-        //   }
-
-        //   String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-
-        //   eventListener.onPictureTaken(encodedImage);
-        //   Log.d(TAG, "CameraPreview pictureTakenHandler called back");
-        //         }
-        //     }.start();
-// >>>>>>> d2a671a65987b5d3a77b5407c8520227ef434d1f
       } catch (OutOfMemoryError e) {
         // most likely failed to allocate memory for rotateBitmap
         Log.d(TAG, "CameraPreview OutOfMemoryError");
@@ -434,6 +416,46 @@ public class CameraActivity extends Fragment {
       }
     }
   };
+
+    private void generatePictureFromView(final Bitmap originalPicture) {
+        new Thread() {
+        public void run() {
+            final File originalPictureFile = storeImage(originalPicture, "_original");
+            eventListener.onPictureTaken(originalPictureFile.getAbsolutePath());
+            }
+        }.start();
+    }
+
+    private File getOutputMediaFile(String suffix){
+
+        File mediaStorageDir = getActivity().getApplicationContext().getFilesDir();
+        if (! mediaStorageDir.exists()){
+        if (! mediaStorageDir.mkdirs()){
+            return null;
+            }
+        }
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("dd_MM_yyyy_HHmm_ss").format(new Date());
+        File mediaFile;
+        String mImageName = "camerapreview_" + timeStamp + suffix + ".jpg";
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+        return mediaFile;
+    }
+
+    private File storeImage(Bitmap image, String suffix) {
+        File pictureFile = getOutputMediaFile(suffix);
+        if (pictureFile != null) {
+            try {
+                FileOutputStream fos = new FileOutputStream(pictureFile);
+                image.compress(Bitmap.CompressFormat.JPEG, 80, fos);
+                fos.close();
+                return pictureFile;
+                } catch (Exception ex) {
+            }
+        }
+        return null;
+    }
+
 
   private Camera.Size getOptimalPictureSize(final int width, final int height, final Camera.Size previewSize, final List<Camera.Size> supportedSizes){
     /*
