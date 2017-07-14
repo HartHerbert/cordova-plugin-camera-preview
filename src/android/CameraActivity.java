@@ -257,7 +257,7 @@ public class CameraActivity extends Fragment {
       mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
       try{
         mCamera.startPreview();
-      }catch (IOException e) {
+      } catch (Exception e) {
         Log.d(TAG, "Error setting camera preview: " + e.getMessage());
         eventListener.onCameraStartedError();
       }
@@ -352,7 +352,7 @@ public class CameraActivity extends Fragment {
 
       try{
         mCamera.startPreview();
-      }catch (IOException e) {
+      }catch (Exception e) {
         Log.d(TAG, "Error setting camera preview: " + e.getMessage());
         eventListener.onCameraStartedError();
       }
@@ -450,7 +450,7 @@ public class CameraActivity extends Fragment {
         canTakePicture = true;
         try{
           mCamera.startPreview();
-        }catch (IOException e) {
+        }catch (Exception e) {
           Log.d(TAG, "Error setting camera preview: " + e.getMessage());
           eventListener.onCameraStartedError();
         }
