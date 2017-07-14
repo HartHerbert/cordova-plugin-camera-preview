@@ -37,6 +37,8 @@ import android.widget.RelativeLayout;
 import org.apache.cordova.LOG;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Exception;
 import java.lang.Integer;
@@ -371,25 +373,36 @@ public class CameraActivity extends Fragment {
     }
   };
 
+
+  public static Bitmap rotateBitmap(Bitmap source, float angle, boolean mirror) {
+      Matrix matrix = new Matrix();
+      if (mirror) {
+         matrix.preScale(-1.0f, 1.0f);
+      }
+      matrix.postRotate(angle);
+      return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+  }
+
+
   PictureCallback jpegPictureCallback = new PictureCallback(){
-    public void onPictureTaken(byte[] data, Camera arg1){
+    public void onPictureTaken(final byte[] data, Camera arg1){
       Log.d(TAG, "CameraPreview jpegPictureCallback");
-
       try {
+        new Thread() {
+          public void run() {
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0,data.length);
+            bitmap = rotateBitmap(bitmap, mPreview.getDisplayOrientation(), cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
 
-        if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-          Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-          bitmap = flipBitmap(bitmap);
 
-          ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-          bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
-          data = outputStream.toByteArray();
-        }
+            byte[] byteArray = outputStream.toByteArray();
+            String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+            eventListener.onPictureTaken(encodedImage);
+            Log.d(TAG, "CameraPreview pictureTakenHandler called back");
+          }
+        }.start();
 
-        String encodedImage = Base64.encodeToString(data, Base64.NO_WRAP);
-
-        eventListener.onPictureTaken(encodedImage);
-        Log.d(TAG, "CameraPreview pictureTakenHandler called back");
       } catch (OutOfMemoryError e) {
         // most likely failed to allocate memory for rotateBitmap
         Log.d(TAG, "CameraPreview OutOfMemoryError");
