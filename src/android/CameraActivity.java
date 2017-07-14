@@ -413,17 +413,17 @@ public class CameraActivity extends Fragment {
             bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
 
 
-            final File originalPictureFile = storeImage(bitmap, "_original");
+            /*final File originalPictureFile = storeImage(bitmap, "_original");
             if(originalPictureFile == null){
               eventListener.onPictureTakenError("Picture failed to save");
-            }
+            }*/
 
-            eventListener.onPictureTaken(originalPictureFile.getAbsolutePath());
+            //eventListener.onPictureTaken(originalPictureFile.getAbsolutePath());
 
 
-            //byte[] byteArray = outputStream.toByteArray();
-            //String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-            //eventListener.onPictureTaken(encodedImage);
+            byte[] byteArray = outputStream.toByteArray();
+            String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+            eventListener.onPictureTaken(encodedImage);
             Log.d(TAG, "CameraPreview pictureTakenHandler called back");
           }
         }.start();
@@ -460,9 +460,6 @@ public class CameraActivity extends Fragment {
       mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
       return mediaFile;
    }
-
-
-
 
   private File storeImage(Bitmap image, String suffix) {
       File pictureFile = getOutputMediaFile(suffix);
