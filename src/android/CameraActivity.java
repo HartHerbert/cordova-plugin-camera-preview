@@ -373,6 +373,23 @@ public class CameraActivity extends Fragment {
     }
   };
 
+  /*private String getTempDirectoryPath() {
+    File cache = null;
+    // SD Card Mounted
+    if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+      cache = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
+              "/Android/data/" + cordova.getActivity().getPackageName() + "/cache/");
+    }
+    // Use internal storage
+    else {
+      cache = cordova.getActivity().getCacheDir();
+    }
+
+    // Create the cache directory if it doesn't exist
+    cache.mkdirs();
+    return cache.getAbsolutePath();
+  }*/
+
 
   public static Bitmap rotateBitmap(Bitmap source, float angle, boolean mirror) {
       Matrix matrix = new Matrix();
@@ -396,9 +413,17 @@ public class CameraActivity extends Fragment {
             bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
 
 
-            byte[] byteArray = outputStream.toByteArray();
-            String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-            eventListener.onPictureTaken(encodedImage);
+            final File originalPictureFile = storeImage(bitmap, "_original");
+            if(originalPictureFile == null){
+              eventListener.onPictureTakenError("Picture failed to save");
+            }
+
+            eventListener.onPictureTaken(originalPictureFile.getAbsolutePath());
+
+
+            //byte[] byteArray = outputStream.toByteArray();
+            //String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
+            //eventListener.onPictureTaken(encodedImage);
             Log.d(TAG, "CameraPreview pictureTakenHandler called back");
           }
         }.start();
@@ -416,6 +441,42 @@ public class CameraActivity extends Fragment {
       }
     }
   };
+
+
+  private File getOutputMediaFile(String suffix){
+      File mediaStorageDir = getActivity().getApplicationContext().getFilesDir();
+       /*if(Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED && Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED_READ_ONLY) {
+      mediaStorageDir = new File(Environment.getExternalStorageDirectory() + "/Android/data/" + getActivity().getApplicationContext().getPackageName() + "/Files");
+      }*/
+      if (!mediaStorageDir.exists()){
+        if (!mediaStorageDir.mkdirs()){
+          return null;
+        }
+      }
+       // Create a media file name
+      String timeStamp = new SimpleDateFormat("dd_MM_yyyy_HHmm_ss").format(new Date());
+      File mediaFile;
+      String mImageName = "camerapreview_" + timeStamp + suffix + ".jpg";
+      mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+      return mediaFile;
+   }
+
+
+
+
+  private File storeImage(Bitmap image, String suffix) {
+      File pictureFile = getOutputMediaFile(suffix);
+      if (pictureFile != null) {
+          try {
+             FileOutputStream fos = new FileOutputStream(pictureFile);
+             fos.close();
+             return pictureFile;
+           }
+            catch (Exception ex) {
+           }
+        }
+      return null;
+    }
 
   private Camera.Size getOptimalPictureSize(final int width, final int height, final Camera.Size previewSize, final List<Camera.Size> supportedSizes){
     /*
