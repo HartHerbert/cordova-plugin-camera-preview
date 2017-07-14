@@ -55,6 +55,7 @@ public class CameraActivity extends Fragment {
     void onFocusSet(int pointX, int pointY);
     void onFocusSetError(String message);
     void onCameraStarted();
+    void onCameraStartedError();
   }
 
   private CameraPreviewListener eventListener;
@@ -254,7 +255,12 @@ public class CameraActivity extends Fragment {
       eventListener.onCameraStarted();
     } else {
       mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
-      mCamera.startPreview();
+      try{
+        mCamera.startPreview();
+      }catch (IOException e) {
+        Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+        eventListener.onCameraStartedError();
+      }
     }
 
     Log.d(TAG, "cameraCurrentlyLocked:" + cameraCurrentlyLocked);
@@ -344,7 +350,12 @@ public class CameraActivity extends Fragment {
 
       mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
 
-      mCamera.startPreview();
+      try{
+        mCamera.startPreview();
+      }catch (IOException e) {
+        Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+        eventListener.onCameraStartedError();
+      }
     }
   }
 
@@ -437,7 +448,12 @@ public class CameraActivity extends Fragment {
         Log.d(TAG, "CameraPreview onPictureTaken general exception");
       } finally {
         canTakePicture = true;
-        mCamera.startPreview();
+        try{
+          mCamera.startPreview();
+        }catch (IOException e) {
+          Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+          eventListener.onCameraStartedError();
+        }
       }
     }
   };
