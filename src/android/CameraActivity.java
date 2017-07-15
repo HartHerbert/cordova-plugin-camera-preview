@@ -413,12 +413,12 @@ public class CameraActivity extends Fragment {
 
 
   public static Bitmap rotateBitmap(Bitmap source, float angle, boolean mirror) {
-      Matrix matrix = new Matrix();
-      if (mirror) {
-         matrix.preScale(-1.0f, 1.0f);
-      }
-      matrix.postRotate(angle);
-      return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    Matrix matrix = new Matrix();
+    if (mirror) {
+      matrix.preScale(-1.0f, 1.0f);
+    }
+    matrix.postRotate(angle);
+    return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
   }
 
 
@@ -470,36 +470,36 @@ public class CameraActivity extends Fragment {
 
 
   private File getOutputMediaFile(String suffix){
-      File mediaStorageDir = getActivity().getApplicationContext().getFilesDir();
+    File mediaStorageDir = getActivity().getApplicationContext().getFilesDir();
        /*if(Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED && Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED_READ_ONLY) {
       mediaStorageDir = new File(Environment.getExternalStorageDirectory() + "/Android/data/" + getActivity().getApplicationContext().getPackageName() + "/Files");
       }*/
-      if (!mediaStorageDir.exists()){
-        if (!mediaStorageDir.mkdirs()){
-          return null;
-        }
+    if (!mediaStorageDir.exists()){
+      if (!mediaStorageDir.mkdirs()){
+        return null;
       }
-       // Create a media file name
-      String timeStamp = new SimpleDateFormat("dd_MM_yyyy_HHmm_ss").format(new Date());
-      File mediaFile;
-      String mImageName = "camerapreview_" + timeStamp + suffix + ".jpg";
-      mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
-      return mediaFile;
-   }
+    }
+    // Create a media file name
+    String timeStamp = new SimpleDateFormat("dd_MM_yyyy_HHmm_ss").format(new Date());
+    File mediaFile;
+    String mImageName = "camerapreview_" + timeStamp + suffix + ".jpg";
+    mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+    return mediaFile;
+  }
 
   private File storeImage(Bitmap image, String suffix) {
-      File pictureFile = getOutputMediaFile(suffix);
-      if (pictureFile != null) {
-          try {
-             FileOutputStream fos = new FileOutputStream(pictureFile);
-             fos.close();
-             return pictureFile;
-           }
-            catch (Exception ex) {
-           }
-        }
-      return null;
+    File pictureFile = getOutputMediaFile(suffix);
+    if (pictureFile != null) {
+      try {
+        FileOutputStream fos = new FileOutputStream(pictureFile);
+        fos.close();
+        return pictureFile;
+      }
+      catch (Exception ex) {
+      }
     }
+    return null;
+  }
 
   private Camera.Size getOptimalPictureSize(final int width, final int height, final Camera.Size previewSize, final List<Camera.Size> supportedSizes){
     /*
