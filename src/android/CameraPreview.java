@@ -278,11 +278,10 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
           fragmentTransaction.commit();
         }
       });
-      return true;
-
     }catch(Exception e){
       callbackContext.error("Camera could not be started");
     }
+      return true;
   }
 
   public void onCameraStarted() {
