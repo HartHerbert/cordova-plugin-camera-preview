@@ -242,7 +242,12 @@ public class CameraActivity extends Fragment {
   public void onResume() {
     super.onResume();
 
-    mCamera = Camera.open(defaultCameraId);
+    try{
+      mCamera = Camera.open(defaultCameraId);
+    } catch(Exception e){
+      //camera not available or in use or does not exist
+      return;
+    }
 
     if (cameraParameters != null) {
       mCamera.setParameters(cameraParameters);
@@ -327,7 +332,12 @@ public class CameraActivity extends Fragment {
       }
 
       // Acquire the next camera and request Preview to reconfigure parameters.
-      mCamera = Camera.open(cameraCurrentlyLocked);
+      try{
+        mCamera = Camera.open(cameraCurrentlyLocked);
+      }catch(Exception e){
+        //Camera not available
+        return;
+      }
 
       if (cameraParameters != null) {
         Log.d(TAG, "camera parameter not null");
