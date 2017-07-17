@@ -33,7 +33,6 @@ class Preview extends RelativeLayout implements SurfaceHolder.Callback {
 
   Preview(Context context) {
     super(context);
-
     mSurfaceView = new CustomSurfaceView(context);
     addView(mSurfaceView);
 

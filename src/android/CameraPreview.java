@@ -73,7 +73,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 
   private ViewParent webViewParent;
 
-  private int containerViewId = 1;
+  private int containerViewId;
   public CameraPreview(){
     super();
     Log.d(TAG, "Constructing");
@@ -81,7 +81,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 
   @Override
   public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-
     if (START_CAMERA_ACTION.equals(action)) {
       if (cordova.hasPermission(permissions[0])) {
         return startCamera(args.getInt(0), args.getInt(1), args.getInt(2), args.getInt(3), args.getString(4), args.getBoolean(5), args.getBoolean(6), args.getBoolean(7), args.getString(8), args.getBoolean(9), callbackContext);
@@ -248,8 +247,9 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
         @Override
         public void run() {
 
-
           //create or update the layout params for the container view
+          containerViewId = 1;
+
           FrameLayout containerView = (FrameLayout)cordova.getActivity().findViewById(containerViewId);
           if(containerView == null){
             containerView = new FrameLayout(cordova.getActivity().getApplicationContext());
@@ -279,35 +279,48 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
         }
       });
     }catch(Exception e){
-      startCameraCallbackContext.error("Camera could not be started");
+      onCameraStartedError();
+      //startCameraCallbackContext.error("Camera could not be started");
     }
     return true;
   }
 
   public void onCameraStarted() {
     Log.d(TAG, "Camera started");
-
     PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "Camera started");
     pluginResult.setKeepCallback(true);
     startCameraCallbackContext.sendPluginResult(pluginResult);
   }
 
   public void onCameraStartedError() {
-    Log.d(TAG, "Camera failed to start");
-
     Log.d(TAG, "CameraPreview onCameraStartedError");
-    startCameraCallbackContext.error("Camera failed to start");
+    if(startCameraCallbackContext != null){
+      Log.d(TAG, "CameraPreview onCameraStartedError startCameraCallbackContext not NULL");
+      PluginResult p = new PluginResult(PluginResult.Status.ERROR,"Camera failed to start");
+      p.setKeepCallback(true);
+      startCameraCallbackContext.sendPluginResult(p);
+    }
+    else{
+      //startCameraCallbackContext is null
+      Log.d(TAG, "CameraPreview onCameraStartedError startCameraCallbackContext is NULL");
+      startCameraCallbackContext.error("Camera could not be started");
+    }
+
   }
 
   private boolean takePicture(int width, int height, int quality, CallbackContext callbackContext) {
-    if(this.hasView(callbackContext) == false){
-      return true;
+    try{
+      if(this.hasView(callbackContext) == false){
+        return true;
+      }
+
+      takePictureCallbackContext = callbackContext;
+
+      fragment.takePicture(width, height, quality);
+    }catch(Exception e){
+      onPictureTakenError("ERROR TAKING PICTURE");
+      return false;
     }
-
-    takePictureCallbackContext = callbackContext;
-
-    fragment.takePicture(width, height, quality);
-
     return true;
   }
 
@@ -805,15 +818,22 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
 
   private boolean showCamera(CallbackContext callbackContext) {
     if(this.hasView(callbackContext) == false){
+      Log.d(TAG,"showCamera hasView == false");
       return true;
     }
 
-    FragmentManager fragmentManager = cordova.getActivity().getFragmentManager();
-    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-    fragmentTransaction.show(fragment);
-    fragmentTransaction.commit();
-
-    callbackContext.success();
+    try{
+      FragmentManager fragmentManager = cordova.getActivity().getFragmentManager();
+      FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+      fragmentTransaction.show(fragment);
+      fragmentTransaction.commit();
+      callbackContext.success();
+      Log.d(TAG,"showCamera callbackContext.success");
+    }catch (Exception e){
+      Log.d(TAG,"showCamera callbackContext.error");
+      callbackContext.error("Failed to show Camera Preview");
+      return false;
+    }
     return true;
   }
 

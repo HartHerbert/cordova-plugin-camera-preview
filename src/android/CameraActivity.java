@@ -58,7 +58,7 @@ public class CameraActivity extends Fragment {
     void onCameraStartedError();
   }
 
-  private CameraPreviewListener eventListener;
+  public CameraPreviewListener eventListener;
   private static final String TAG = "CameraActivity";
   public FrameLayout mainLayout;
   public FrameLayout frameContainerLayout;
@@ -118,12 +118,16 @@ public class CameraActivity extends Fragment {
       frameContainerLayout = (FrameLayout) view.findViewById(getResources().getIdentifier("frame_container", "id", appResourcesPackage));
       frameContainerLayout.setLayoutParams(layoutParams);
 
-      //video view
-      mPreview = new Preview(getActivity());
-      mainLayout = (FrameLayout) view.findViewById(getResources().getIdentifier("video_view", "id", appResourcesPackage));
-      mainLayout.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
-      mainLayout.addView(mPreview);
-      mainLayout.setEnabled(false);
+      try{
+        //video view
+        mPreview = new Preview(getActivity());
+        mainLayout = (FrameLayout) view.findViewById(getResources().getIdentifier("video_view", "id", appResourcesPackage));
+        mainLayout.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        mainLayout.addView(mPreview);
+        mainLayout.setEnabled(false);
+      }catch(Exception e){
+        eventListener.onCameraStartedError();
+      }
 
       final GestureDetector gestureDetector = new GestureDetector(getActivity().getApplicationContext(), new TapGestureDetector());
 
@@ -259,8 +263,8 @@ public class CameraActivity extends Fragment {
       mPreview.setCamera(mCamera, cameraCurrentlyLocked);
       eventListener.onCameraStarted();
     } else {
-      mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
       try{
+        mPreview.switchCamera(mCamera, cameraCurrentlyLocked);
         mCamera.startPreview();
       } catch (Exception e) {
         Log.d(TAG, "Error setting camera preview: " + e.getMessage());
@@ -572,7 +576,7 @@ public class CameraActivity extends Fragment {
   public void takePicture(final int width, final int height, final int quality){
     Log.d(TAG, "CameraPreview takePicture width: " + width + ", height: " + height + ", quality: " + quality);
 
-    if(mPreview != null) {
+    if(mPreview != null && mCamera != null) {
       if(!canTakePicture){
         return;
       }
@@ -597,7 +601,11 @@ public class CameraActivity extends Fragment {
           params.setRotation(mPreview.getDisplayOrientation());
 
           mCamera.setParameters(params);
-          mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
+          try{
+            mCamera.takePicture(shutterCallback, null, jpegPictureCallback);
+          }catch(RuntimeException e){
+            eventListener.onPictureTakenError("ERROR TAKING PICTURE");
+          }
         }
       }.start();
     } else {
