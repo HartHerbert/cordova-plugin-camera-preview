@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -433,39 +434,14 @@ public class CameraActivity extends Fragment {
       try {
         new Thread() {
           public void run() {
-            try{
-              File path = getActivity().getApplicationContext().getCacheDir();
-              File file = File.createTempFile("POOKYPET", ".jpg", path);
-              try {
-                // build directory
-                if (file.getParent() != null && !path.isDirectory()) {
-                  path.mkdirs();
-                }
-                // output image to file
-
-                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0,data.length);
-                bitmap = rotateBitmap(bitmap, mPreview.getDisplayOrientation(), cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT);
-                FileOutputStream fos = new FileOutputStream(file.getAbsolutePath());
-                bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, fos);
-                fos.flush();
-                fos.close();
-                eventListener.onPictureTaken(file.getAbsolutePath());
-              } catch (Exception e) {
-                eventListener.onPictureTakenError("Error saving picture");
-                e.printStackTrace();
-              }
-            }catch(IOException e){
-              eventListener.onPictureTakenError("Could not create temp file");
-            }
-            /*final File originalPictureFile = storeImage(bitmap, "_original");
-            if(originalPictureFile == null){
-              eventListener.onPictureTakenError("Picture failed to save");
-            }*/
-            //eventListener.onPictureTaken(originalPictureFile.getAbsolutePath());
-            /*byte[] byteArray = outputStream.toByteArray();
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0,data.length);
+            bitmap = rotateBitmap(bitmap, mPreview.getDisplayOrientation(), cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
+            byte[] byteArray = outputStream.toByteArray();
             String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
-            eventListener.onPictureTaken(encodedImage);*/
-            Log.d(TAG, "CameraPreview pictureTakenHandler called back");
+            eventListener.onPictureTaken(encodedImage);
+            Log.d(TAG, "CameraPreview pictureTakenHandler called back"+encodedImage);
           }
         }.start();
 
