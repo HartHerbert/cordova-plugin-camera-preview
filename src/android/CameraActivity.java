@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -37,12 +38,16 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
+import com.bumptech.glide.load.data.ExifOrientationStream;
+
 import org.apache.cordova.LOG;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.Exception;
 import java.lang.Integer;
 import java.text.SimpleDateFormat;
@@ -429,7 +434,7 @@ public class CameraActivity extends Fragment {
   }
 
   PictureCallback jpegPictureCallback = new PictureCallback(){
-    public void onPictureTaken(final byte[] data, Camera arg1){
+    public void onPictureTaken(final byte[] data, final Camera arg1){
       Log.d(TAG, "CameraPreview jpegPictureCallback");
       try {
         new Thread() {
@@ -437,7 +442,8 @@ public class CameraActivity extends Fragment {
             Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0,data.length);
             bitmap = rotateBitmap(bitmap, mPreview.getDisplayOrientation(), cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, currentQuality, outputStream);
+            bitmap.compress(CompressFormat.JPEG, currentQuality, outputStream);
+
             byte[] byteArray = outputStream.toByteArray();
             String encodedImage = Base64.encodeToString(byteArray, Base64.NO_WRAP);
             eventListener.onPictureTaken(encodedImage);
@@ -464,38 +470,13 @@ public class CameraActivity extends Fragment {
     }
   };
 
-
-  private File getOutputMediaFile(String suffix){
-    File mediaStorageDir = getActivity().getApplicationContext().getFilesDir();
-       /*if(Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED && Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED_READ_ONLY) {
-      mediaStorageDir = new File(Environment.getExternalStorageDirectory() + "/Android/data/" + getActivity().getApplicationContext().getPackageName() + "/Files");
-      }*/
-    if (!mediaStorageDir.exists()){
-      if (!mediaStorageDir.mkdirs()){
-        return null;
-      }
-    }
-    // Create a media file name
-    String timeStamp = new SimpleDateFormat("dd_MM_yyyy_HHmm_ss").format(new Date());
-    File mediaFile;
-    String mImageName = "camerapreview_" + timeStamp + suffix + ".jpg";
-    mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
-    return mediaFile;
+  private static int exifToDegrees(int exifOrientation) {
+    if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_90) { return 90; }
+    else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_180) {  return 180; }
+    else if (exifOrientation == ExifInterface.ORIENTATION_ROTATE_270) {  return 270; }
+    return 0;
   }
 
-  private File storeImage(Bitmap image, String suffix) {
-    File pictureFile = getOutputMediaFile(suffix);
-    if (pictureFile != null) {
-      try {
-        FileOutputStream fos = new FileOutputStream(pictureFile);
-        fos.close();
-        return pictureFile;
-      }
-      catch (Exception ex) {
-      }
-    }
-    return null;
-  }
 
   private Camera.Size getOptimalPictureSize(final int width, final int height, final Camera.Size previewSize, final List<Camera.Size> supportedSizes){
     /*
